@@ -1,0 +1,57 @@
+import { TypeOf, object, string, z } from "zod"
+import { RoleEnumType } from "../entities/user.entity";
+
+const createUserShema = object({
+    body: object({
+        name: string({
+            required_error: 'Name is required',
+        }),
+
+        email: string({
+            required_error: 'Email address is required',
+        })
+            .email('Invalid email address'),
+
+        password: string({
+            required_error: 'Password is required',
+        })
+            .min(8, 'Password must be more than 8 characters')
+            .max(32, 'Password must be less than 32 characters'),
+
+        passwordConfirm: string({
+            required_error: 'Password confirm your password'
+        }),
+
+        role: z.optional(z.nativeEnum(RoleEnumType)),
+
+    })
+        .refine((data) => data.password === data.passwordConfirm, {
+            path: ['passwordConfirm'],
+            message: 'Password do not match'
+        })
+});
+
+const loginUserShema =  object({
+    body: object({
+
+        email: string({
+            required_error: ('Email address is required')
+        }).email('Invalid email address'),
+
+        passwords: string({
+            required_error: ('Passwords are required')
+        }).min(8, 'Invalid email or password')
+    }),
+});
+
+type createUserInput = Omit<TypeOf<typeof createUserShema>['body'], 'passwordConfirm'>
+
+type loginUserInput = TypeOf<typeof loginUserShema>['body']
+
+
+export {
+    createUserInput as CreateUserInput,
+    loginUserInput as LoginUserInput,
+    createUserShema as CreateUserShema,
+    loginUserShema as LoginUserShema
+}
